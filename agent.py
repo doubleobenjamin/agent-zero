@@ -234,7 +234,48 @@ class AgentConfig:
     code_exec_ssh_port: int = 55022
     code_exec_ssh_user: str = "root"
     code_exec_ssh_pass: str = ""
-    additional: Dict[str, Any] = field(default_factory=dict)
+    additional: Dict[str, Any] = field(default_factory=lambda: {
+        # Enhanced Memory System
+        'enhanced_memory': True,
+        'graphiti_enabled': True,
+        'qdrant_enabled': True,
+        'hybrid_search_enabled': True,
+        'context_extension_enabled': True,
+
+        # Agent Orchestration (Agno)
+        'agno_orchestration': True,
+        'max_concurrent_agents': 10,
+        'agent_timeout': 300,
+        'team_coordination_timeout': 600,
+        'enable_persistent_agents': True,
+        'enable_memory_sharing': True,
+
+        # ACI Tools Integration
+        'aci_tools': True,
+        'aci_api_key': '',
+        'aci_project_id': '',
+        'aci_base_url': 'https://api.aci.dev',
+
+        # Database Configuration
+        'neo4j_uri': 'bolt://localhost:7687',
+        'neo4j_user': 'neo4j',
+        'neo4j_password': 'password',
+        'qdrant_host': 'localhost',
+        'qdrant_port': 6333,
+        'qdrant_api_key': '',
+
+        # Performance Settings
+        'enable_caching': True,
+        'cache_ttl': 3600,  # 1 hour cache TTL
+        'memory_optimization': True,
+        'parallel_processing': True,
+
+        # Monitoring and Health Checks
+        'health_checks_enabled': True,
+        'performance_monitoring': True,
+        'error_recovery': True,
+        'graceful_degradation': True
+    })
 
 
 @dataclass
