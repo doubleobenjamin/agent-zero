@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document details how to integrate Cognee's advanced knowledge processing capabilities into the Agent Zero memory system. Cognee provides sophisticated data ingestion, entity extraction, knowledge graph construction, and multi-modal processing that significantly enhances Agent Zero's memory capabilities beyond what Graphiti alone can provide.
+This document details how Cognee's advanced knowledge processing capabilities are integrated into the enhanced Agent Zero memory system by default. Cognee provides sophisticated data ingestion, entity extraction, knowledge graph construction, and multi-modal processing that significantly enhances Agent Zero's memory capabilities beyond what Graphiti alone can provide. **Cognee is enabled by default** in the enhanced Agent Zero implementation, working seamlessly with Qdrant and Graphiti.
 
 ## Cognee Capabilities Analysis
 

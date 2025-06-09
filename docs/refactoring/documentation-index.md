@@ -1,8 +1,8 @@
-# Agent Zero Refactoring: Documentation Index
+# Enhanced Agent Zero: Documentation Index
 
 ## Overview
 
-This document provides a comprehensive index of all documentation that autonomous agents will need to reference when working on their assigned tasks. Each section is organized by task and includes both local repository files and external documentation links.
+This document provides a comprehensive index of all documentation for the enhanced Agent Zero implementation. This is a clean implementation with no migration requirements, featuring Qdrant (production vector database), Graphiti (temporal knowledge graphs), Cognee (advanced knowledge processing), Agno (multi-agent orchestration), and ACI (standardized tool interfaces). Each section is organized by development phase and includes all necessary references for autonomous agents working on their assigned tasks.
 
 ## Core Repository Structure
 
@@ -17,20 +17,18 @@ python/helpers/            # Utility classes and functions
 memory/                    # Current file-based memory storage
 prompts/                   # Prompt templates and system messages
 docs/                      # Current documentation
-docs/refactoring/          # Refactoring documentation and guides
-├── PRD.md                 # Product Requirements Document
-├── architecture-overview.md # System architecture and integration design
-├── task-breakdown.md      # Original parallel task breakdown
-├── revised-task-breakdown.md # Revised tasks building on existing codebase
+docs/refactoring/          # Enhanced Agent Zero documentation and guides
+├── PRD.md                 # Product Requirements Document (updated for clean implementation)
+├── architecture-overview.md # Enhanced system architecture overview
+├── task-breakdown.md      # 6-agent focused development plan
 ├── codebase-adaptation-guide.md # How to extend existing Agent Zero code
-├── clean-implementation-summary.md # Clean implementation with no migration
-├── database-setup.md      # Database setup and configuration guide
-├── migration-guide.md     # Step-by-step upgrade procedures
-├── prompts-migration.md   # Prompt system updates and enhancements
-├── graphiti-integration.md # Graphiti integration guide
-├── agno-integration.md    # Agno integration guide
-├── aci-integration.md     # ACI integration guide
-├── cognee-integration.md  # Cognee integration guide
+├── clean-implementation-summary.md # Complete clean implementation guide
+├── database-setup.md      # Fresh Qdrant + Neo4j setup with Docker Compose
+├── prompts-migration.md   # Enhanced prompt system updates
+├── graphiti-integration.md # Graphiti temporal knowledge graphs
+├── agno-integration.md    # Agno multi-agent orchestration
+├── aci-integration.md     # ACI standardized tool interfaces
+├── cognee-integration.md  # Cognee advanced knowledge processing
 └── documentation-index.md # This file
 ```
 
