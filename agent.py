@@ -803,6 +803,31 @@ class Agent:
         from python.tools.unknown import Unknown
         from python.helpers.tool import Tool
 
+        # Check ACI tools first
+        try:
+            from python.helpers.aci_interface import ACIInterface
+            from python.tools.aci_unified_tool import ACIUnifiedTool
+
+            aci_interface = ACIInterface()
+            if aci_interface.is_enabled() and aci_interface.initialize():
+                # Check if this is an ACI function name (format: APP_NAME__FUNCTION_NAME)
+                if "__" in name or name.startswith("aci_"):
+                    return ACIUnifiedTool(
+                        agent=self,
+                        name=name,
+                        method=method,
+                        args=args,
+                        message=message,
+                        **kwargs
+                    )
+        except ImportError:
+            # ACI not available, continue to legacy tools
+            pass
+        except Exception:
+            # ACI initialization failed, continue to legacy tools
+            pass
+
+        # Fall back to legacy tools
         classes = extract_tools.load_classes_from_folder(
             "python/tools", name + ".py", Tool
         )

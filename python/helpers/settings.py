@@ -770,7 +770,59 @@ def convert_out(settings: Settings) -> SettingsOutput:
         "tab": "mcp",
     }
 
-    # Add the section to the result
+    # ACI Unified Tool Interface Settings
+    aci_fields: list[SettingsField] = []
+
+    aci_fields.append(
+        {
+            "id": "aci_tools_enabled",
+            "title": "Enable ACI Tools",
+            "description": "Enable access to 600+ standardized tools via ACI MCP servers.",
+            "type": "switch",
+            "value": os.getenv("ACI_TOOLS_ENABLED", "true").lower() == "true",
+        }
+    )
+
+    aci_fields.append(
+        {
+            "id": "aci_api_key",
+            "title": "ACI API Key",
+            "description": "Your ACI API key for accessing unified tool servers.",
+            "type": "text",
+            "hidden": True,
+            "value": os.getenv("ACI_API_KEY", ""),
+        }
+    )
+
+    aci_fields.append(
+        {
+            "id": "aci_project_id",
+            "title": "ACI Project ID",
+            "description": "Your ACI project ID for tool access and billing.",
+            "type": "text",
+            "value": os.getenv("ACI_PROJECT_ID", ""),
+        }
+    )
+
+    aci_fields.append(
+        {
+            "id": "aci_base_url",
+            "title": "ACI Base URL",
+            "description": "Base URL for ACI services (usually https://api.aci.dev).",
+            "type": "text",
+            "value": os.getenv("ACI_BASE_URL", "https://api.aci.dev"),
+        }
+    )
+
+    aci_section: SettingsSection = {
+        "id": "aci_tools",
+        "title": "ACI Unified Tools",
+        "description": "Configure access to ACI's unified tool interface with 600+ standardized tools via MCP servers.",
+        "fields": aci_fields,
+        "tab": "mcp",
+    }
+
+    # Add the sections to the result
     result: SettingsOutput = {
         "sections": [
             agent_section,
@@ -784,6 +836,7 @@ def convert_out(settings: Settings) -> SettingsOutput:
             auth_section,
             mcp_client_section,
             mcp_server_section,
+            aci_section,
             dev_section,
         ]
     }
