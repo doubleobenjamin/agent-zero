@@ -251,10 +251,10 @@ This is a **clean implementation with no migration requirements** - a fresh star
 4. **Namespace Isolation**: Agents maintain private context while enabling collaboration
 
 ### Performance Requirements
-1. **Memory Query Latency**: < 100ms for typical knowledge retrieval
-2. **Agent Spawn Time**: < 2s for new agent initialization
-3. **Tool Execution**: < 5s for standard API calls
-4. **Workflow Coordination**: < 10s for team task delegation
+1. **Memory Query Latency**: Fast response for typical knowledge retrieval
+2. **Agent Spawn Time**: Efficient new agent initialization
+3. **Tool Execution**: Responsive standard API calls
+4. **Workflow Coordination**: Efficient team task delegation
 
 ### Quality Requirements
 1. **Backward Compatibility**: Existing Agent Zero workflows continue to function
