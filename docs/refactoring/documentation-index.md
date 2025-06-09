@@ -20,7 +20,8 @@ docs/                      # Current documentation
 docs/refactoring/          # Enhanced Agent Zero documentation and guides
 ├── PRD.md                 # Product Requirements Document (updated for clean implementation)
 ├── architecture-overview.md # Enhanced system architecture overview
-├── task-breakdown.md      # 6-agent focused development plan
+├── task-breakdown.md      # 6-agent development plan (summary)
+├── step-by-step-execution-guide.md # Detailed implementation instructions for agents
 ├── codebase-adaptation-guide.md # How to extend existing Agent Zero code
 ├── clean-implementation-summary.md # Complete clean implementation guide
 ├── database-setup.md      # Fresh Qdrant + Neo4j setup with Docker Compose
