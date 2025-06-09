@@ -56,3 +56,9 @@ instruments/**
 # Global rule to include .gitkeep files anywhere
 !**/.gitkeep
 agent_history.gif
+
+# Ignore cloned integration repositories (referenced in documentation)
+aci/
+agno/
+cognee/
+graphiti/
