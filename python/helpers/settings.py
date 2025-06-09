@@ -71,6 +71,31 @@ class Settings(TypedDict):
     mcp_server_enabled: bool
     mcp_server_token: str
 
+    # Enhanced capabilities settings
+    enhanced_memory: bool
+    graphiti_enabled: bool
+    qdrant_enabled: bool
+    agno_orchestration: bool
+    max_concurrent_agents: int
+    agent_timeout: int
+    enable_caching: bool
+    cache_ttl: int
+    health_checks_enabled: bool
+    performance_monitoring: bool
+
+    # Database connection settings
+    neo4j_uri: str
+    neo4j_user: str
+    neo4j_password: str
+    qdrant_host: str
+    qdrant_port: int
+    qdrant_api_key: str
+
+    # ACI configuration
+    aci_api_key: str
+    aci_project_id: str
+    aci_base_url: str
+
 
 class PartialSettings(Settings, total=False):
     pass
@@ -770,7 +795,123 @@ def convert_out(settings: Settings) -> SettingsOutput:
         "tab": "mcp",
     }
 
-    # ACI Unified Tool Interface Settings
+    # Enhanced capabilities section (Phase 1, Agent 5)
+    enhanced_fields: list[SettingsField] = []
+
+    enhanced_fields.append({
+        "id": "enhanced_memory",
+        "title": "Enhanced Memory System",
+        "description": "Enable advanced memory capabilities with Graphiti and Qdrant integration",
+        "type": "switch",
+        "value": settings["enhanced_memory"],
+    })
+
+    enhanced_fields.append({
+        "id": "agno_orchestration",
+        "title": "Agent Orchestration (Agno)",
+        "description": "Enable multi-agent coordination and task distribution",
+        "type": "switch",
+        "value": settings["agno_orchestration"],
+    })
+
+    enhanced_fields.append({
+        "id": "aci_tools_enabled",
+        "title": "ACI Tools Integration",
+        "description": "Enable access to 600+ unified tools via ACI (configured in MCP tab)",
+        "type": "switch",
+        "value": os.getenv("ACI_TOOLS_ENABLED", "true").lower() == "true",
+    })
+
+    enhanced_fields.append({
+        "id": "max_concurrent_agents",
+        "title": "Max Concurrent Agents",
+        "description": "Maximum number of agents that can run simultaneously",
+        "type": "number",
+        "min": 1,
+        "max": 50,
+        "value": settings["max_concurrent_agents"],
+    })
+
+    enhanced_fields.append({
+        "id": "enable_caching",
+        "title": "Enable Caching",
+        "description": "Cache responses and computations for better performance",
+        "type": "switch",
+        "value": settings["enable_caching"],
+    })
+
+    enhanced_fields.append({
+        "id": "cache_ttl",
+        "title": "Cache TTL (seconds)",
+        "description": "How long to cache results (default: 3600 = 1 hour)",
+        "type": "number",
+        "min": 60,
+        "max": 86400,
+        "value": settings.get("cache_ttl", 3600),
+    })
+
+    enhanced_section: SettingsSection = {
+        "id": "enhanced",
+        "title": "Enhanced Capabilities",
+        "description": "Advanced features for memory, orchestration, and tool integration",
+        "fields": enhanced_fields,
+        "tab": "agent",
+    }
+
+    # Database configuration section (Phase 1, Agent 5)
+    database_fields: list[SettingsField] = []
+
+    database_fields.append({
+        "id": "neo4j_uri",
+        "title": "Neo4j URI",
+        "description": "Connection URI for Neo4j graph database (e.g., bolt://localhost:7687)",
+        "type": "text",
+        "value": settings["neo4j_uri"],
+    })
+
+    database_fields.append({
+        "id": "neo4j_user",
+        "title": "Neo4j Username",
+        "description": "Username for Neo4j database connection",
+        "type": "text",
+        "value": settings["neo4j_user"],
+    })
+
+    database_fields.append({
+        "id": "neo4j_password",
+        "title": "Neo4j Password",
+        "description": "Password for Neo4j database connection",
+        "type": "password",
+        "value": (PASSWORD_PLACEHOLDER if settings["neo4j_password"] else ""),
+    })
+
+    database_fields.append({
+        "id": "qdrant_host",
+        "title": "Qdrant Host",
+        "description": "Hostname for Qdrant vector database",
+        "type": "text",
+        "value": settings["qdrant_host"],
+    })
+
+    database_fields.append({
+        "id": "qdrant_port",
+        "title": "Qdrant Port",
+        "description": "Port for Qdrant vector database",
+        "type": "number",
+        "min": 1,
+        "max": 65535,
+        "value": settings["qdrant_port"],
+    })
+
+    database_section: SettingsSection = {
+        "id": "database",
+        "title": "Database Configuration",
+        "description": "Configuration for graph and vector databases used by enhanced memory system",
+        "fields": database_fields,
+        "tab": "enhanced",
+    }
+
+    # ACI Unified Tool Interface Settings (Phase 1, Agent 3)
     aci_fields: list[SettingsField] = []
 
     aci_fields.append(
@@ -826,6 +967,8 @@ def convert_out(settings: Settings) -> SettingsOutput:
     result: SettingsOutput = {
         "sections": [
             agent_section,
+            enhanced_section,
+            database_section,
             chat_model_section,
             util_model_section,
             embed_model_section,
@@ -836,7 +979,7 @@ def convert_out(settings: Settings) -> SettingsOutput:
             auth_section,
             mcp_client_section,
             mcp_server_section,
-            aci_section,
+            aci_section,  # ACI section from Phase 1, Agent 3
             dev_section,
         ]
     }
@@ -941,6 +1084,8 @@ def _remove_sensitive_settings(settings: Settings):
     settings["rfc_password"] = ""
     settings["root_password"] = ""
     settings["mcp_server_token"] = ""
+    settings["neo4j_password"] = ""
+    settings["aci_api_key"] = ""
 
 
 def _write_sensitive_settings(settings: Settings):
@@ -957,6 +1102,12 @@ def _write_sensitive_settings(settings: Settings):
         dotenv.save_dotenv_value(dotenv.KEY_ROOT_PASSWORD, settings["root_password"])
     if settings["root_password"]:
         set_root_password(settings["root_password"])
+
+    # Save enhanced capabilities sensitive settings
+    if settings["neo4j_password"]:
+        dotenv.save_dotenv_value("NEO4J_PASSWORD", settings["neo4j_password"])
+    if settings["aci_api_key"]:
+        dotenv.save_dotenv_value("ACI_API_KEY", settings["aci_api_key"])
 
 
 def get_default_settings() -> Settings:
@@ -1011,6 +1162,31 @@ def get_default_settings() -> Settings:
         mcp_client_tool_timeout=120,
         mcp_server_enabled=False,
         mcp_server_token=create_auth_token(),
+
+        # Enhanced capabilities (enabled by default)
+        enhanced_memory=True,
+        graphiti_enabled=True,
+        qdrant_enabled=True,
+        agno_orchestration=True,
+        max_concurrent_agents=10,
+        agent_timeout=300,
+        enable_caching=True,
+        cache_ttl=3600,
+        health_checks_enabled=True,
+        performance_monitoring=True,
+
+        # Database connection defaults
+        neo4j_uri="bolt://localhost:7687",
+        neo4j_user="neo4j",
+        neo4j_password="password",
+        qdrant_host="localhost",
+        qdrant_port=6333,
+        qdrant_api_key="",
+
+        # ACI configuration defaults
+        aci_api_key="",
+        aci_project_id="",
+        aci_base_url="https://api.aci.dev",
     )
 
 
