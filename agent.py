@@ -500,8 +500,20 @@ class Agent:
         ):  # if agent has custom folder, use it and use default as backup
             prompt_dir = files.get_abs_path("prompts", self.config.prompts_subdir)
             backup_dir.append(files.get_abs_path("prompts/default"))
+
+        # Add enhanced variables if prompt enhancer is available
+        enhanced_kwargs = kwargs.copy()
+        try:
+            from python.helpers.prompt_enhancer import get_prompt_enhancer
+            enhancer = get_prompt_enhancer(self)
+            enhanced_variables = enhancer.get_enhanced_variables(getattr(self, 'loop_data', None))
+            enhanced_kwargs.update(enhanced_variables)
+        except ImportError:
+            # Graceful degradation if prompt enhancer is not available
+            pass
+
         prompt = files.read_file(
-            files.get_abs_path(prompt_dir, file), _backup_dirs=backup_dir, **kwargs
+            files.get_abs_path(prompt_dir, file), _backup_dirs=backup_dir, **enhanced_kwargs
         )
         prompt = files.remove_code_fences(prompt)
         return prompt

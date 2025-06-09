@@ -2,6 +2,10 @@
 
 {{ include "./agent.system.main.role.md" }}
 
+{{ include "./agent.system.orchestration.md" }}
+
+{{ include "./agent.system.multimodal.md" }}
+
 {{ include "./agent.system.main.environment.md" }}
 
 {{ include "./agent.system.main.communication.md" }}
