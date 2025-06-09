@@ -298,6 +298,23 @@ class Agent:
         self.intervention: UserMessage | None = None
         self.data = {}  # free data object all the tools can use
 
+        # Initialize orchestration components (graceful degradation if not available)
+        self.agno_orchestrator = None
+        self.task_analyzer = None
+        self.agent_registry = None
+        self.team_coordinator = None
+
+        try:
+            from python.helpers.agno_orchestrator import AgnoOrchestrator
+            self.agno_orchestrator = AgnoOrchestrator(self)
+        except ImportError:
+            # Graceful degradation - orchestration features disabled
+            pass
+        except Exception as e:
+            PrintStyle(font_color="yellow", padding=True).print(
+                f"Warning: Failed to initialize orchestration system: {e}"
+            )
+
     async def monologue(self):
         while True:
             try:
