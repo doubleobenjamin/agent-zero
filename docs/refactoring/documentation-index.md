@@ -17,6 +17,21 @@ python/helpers/            # Utility classes and functions
 memory/                    # Current file-based memory storage
 prompts/                   # Prompt templates and system messages
 docs/                      # Current documentation
+docs/refactoring/          # Refactoring documentation and guides
+├── PRD.md                 # Product Requirements Document
+├── architecture-overview.md # System architecture and integration design
+├── task-breakdown.md      # Original parallel task breakdown
+├── revised-task-breakdown.md # Revised tasks building on existing codebase
+├── codebase-adaptation-guide.md # How to extend existing Agent Zero code
+├── clean-implementation-summary.md # Clean implementation with no migration
+├── database-setup.md      # Database setup and configuration guide
+├── migration-guide.md     # Step-by-step upgrade procedures
+├── prompts-migration.md   # Prompt system updates and enhancements
+├── graphiti-integration.md # Graphiti integration guide
+├── agno-integration.md    # Agno integration guide
+├── aci-integration.md     # ACI integration guide
+├── cognee-integration.md  # Cognee integration guide
+└── documentation-index.md # This file
 ```
 
 ### Integrated Repositories
@@ -238,12 +253,15 @@ cognee/                    # Advanced knowledge processing and multi-modal AI me
 - `python/tools/` - Current tool implementations for compatibility
 - `tmp/settings.json` - Current configuration format
 - `.env` and `example.env` - Environment configuration
+- `prompts/` - Current prompt structure and templates
 - `docs/refactoring/migration-guide.md` - Complete migration procedures
+- `docs/refactoring/prompts-migration.md` - Prompt system updates and enhancements
 - All integration guides for understanding new systems
 
 #### Key Implementation Areas
 - Data migration scripts (file memory to Graphiti)
 - Configuration migration tools
+- Prompt template migration and enhancement
 - Backward compatibility layers
 - Backup and rollback mechanisms
 - Validation and testing utilities

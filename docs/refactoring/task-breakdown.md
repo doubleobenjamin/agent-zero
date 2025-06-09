@@ -254,6 +254,7 @@ class MultiModalMemoryExtension(Extension):
 - [ ] Advanced search types (insights, summaries, graph completion)
 - [ ] Namespace isolation working across both systems
 - [ ] Extensions updated for enhanced capabilities
+- [ ] Prompts updated for enhanced memory capabilities
 - [ ] Backward compatibility maintained with existing memory system
 
 ---
@@ -475,7 +476,9 @@ class PerformanceMonitor:
 - `python/tools/` - Current tool implementations for compatibility
 - `tmp/settings.json` - Current configuration format
 - `.env` and `example.env` - Environment configuration
+- `prompts/` - Current prompt structure and templates
 - `docs/refactoring/migration-guide.md` - Complete migration procedures
+- `docs/refactoring/prompts-migration.md` - Prompt system updates
 - All integration guides for understanding new systems
 - Backup and recovery best practices
 
@@ -483,6 +486,7 @@ class PerformanceMonitor:
 - Create data migration scripts
 - Implement backward compatibility
 - Build configuration migration tools
+- Migrate and enhance prompt templates
 - Add rollback mechanisms
 
 **Deliverables**:
