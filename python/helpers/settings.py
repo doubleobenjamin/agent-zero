@@ -76,7 +76,6 @@ class Settings(TypedDict):
     graphiti_enabled: bool
     qdrant_enabled: bool
     agno_orchestration: bool
-    aci_tools: bool
     max_concurrent_agents: int
     agent_timeout: int
     enable_caching: bool
@@ -796,7 +795,7 @@ def convert_out(settings: Settings) -> SettingsOutput:
         "tab": "mcp",
     }
 
-    # Enhanced capabilities section
+    # Enhanced capabilities section (Phase 1, Agent 5)
     enhanced_fields: list[SettingsField] = []
 
     enhanced_fields.append({
@@ -816,11 +815,11 @@ def convert_out(settings: Settings) -> SettingsOutput:
     })
 
     enhanced_fields.append({
-        "id": "aci_tools",
+        "id": "aci_tools_enabled",
         "title": "ACI Tools Integration",
-        "description": "Enable access to 600+ unified tools via ACI",
+        "description": "Enable access to 600+ unified tools via ACI (configured in MCP tab)",
         "type": "switch",
-        "value": settings["aci_tools"],
+        "value": os.getenv("ACI_TOOLS_ENABLED", "true").lower() == "true",
     })
 
     enhanced_fields.append({
@@ -859,7 +858,7 @@ def convert_out(settings: Settings) -> SettingsOutput:
         "tab": "agent",
     }
 
-    # Database configuration section
+    # Database configuration section (Phase 1, Agent 5)
     database_fields: list[SettingsField] = []
 
     database_fields.append({
@@ -912,48 +911,64 @@ def convert_out(settings: Settings) -> SettingsOutput:
         "tab": "enhanced",
     }
 
-    # ACI configuration section
+    # ACI Unified Tool Interface Settings (Phase 1, Agent 3)
     aci_fields: list[SettingsField] = []
 
-    aci_fields.append({
-        "id": "aci_api_key",
-        "title": "ACI API Key",
-        "description": "API key for ACI (AI Code Interpreter) service",
-        "type": "password",
-        "value": (PASSWORD_PLACEHOLDER if settings["aci_api_key"] else ""),
-    })
+    aci_fields.append(
+        {
+            "id": "aci_tools_enabled",
+            "title": "Enable ACI Tools",
+            "description": "Enable access to 600+ standardized tools via ACI MCP servers.",
+            "type": "switch",
+            "value": os.getenv("ACI_TOOLS_ENABLED", "true").lower() == "true",
+        }
+    )
 
-    aci_fields.append({
-        "id": "aci_project_id",
-        "title": "ACI Project ID",
-        "description": "Project ID for ACI service",
-        "type": "text",
-        "value": settings["aci_project_id"],
-    })
+    aci_fields.append(
+        {
+            "id": "aci_api_key",
+            "title": "ACI API Key",
+            "description": "Your ACI API key for accessing unified tool servers.",
+            "type": "text",
+            "hidden": True,
+            "value": os.getenv("ACI_API_KEY", ""),
+        }
+    )
 
-    aci_fields.append({
-        "id": "aci_base_url",
-        "title": "ACI Base URL",
-        "description": "Base URL for ACI service API",
-        "type": "text",
-        "value": settings["aci_base_url"],
-    })
+    aci_fields.append(
+        {
+            "id": "aci_project_id",
+            "title": "ACI Project ID",
+            "description": "Your ACI project ID for tool access and billing.",
+            "type": "text",
+            "value": os.getenv("ACI_PROJECT_ID", ""),
+        }
+    )
+
+    aci_fields.append(
+        {
+            "id": "aci_base_url",
+            "title": "ACI Base URL",
+            "description": "Base URL for ACI services (usually https://api.aci.dev).",
+            "type": "text",
+            "value": os.getenv("ACI_BASE_URL", "https://api.aci.dev"),
+        }
+    )
 
     aci_section: SettingsSection = {
-        "id": "aci",
-        "title": "ACI Configuration",
-        "description": "Configuration for AI Code Interpreter (ACI) tool integration",
+        "id": "aci_tools",
+        "title": "ACI Unified Tools",
+        "description": "Configure access to ACI's unified tool interface with 600+ standardized tools via MCP servers.",
         "fields": aci_fields,
-        "tab": "enhanced",
+        "tab": "mcp",
     }
 
-    # Add the section to the result
+    # Add the sections to the result
     result: SettingsOutput = {
         "sections": [
             agent_section,
             enhanced_section,
             database_section,
-            aci_section,
             chat_model_section,
             util_model_section,
             embed_model_section,
@@ -964,6 +979,7 @@ def convert_out(settings: Settings) -> SettingsOutput:
             auth_section,
             mcp_client_section,
             mcp_server_section,
+            aci_section,  # ACI section from Phase 1, Agent 3
             dev_section,
         ]
     }
@@ -1152,7 +1168,6 @@ def get_default_settings() -> Settings:
         graphiti_enabled=True,
         qdrant_enabled=True,
         agno_orchestration=True,
-        aci_tools=True,
         max_concurrent_agents=10,
         agent_timeout=300,
         enable_caching=True,

@@ -34,7 +34,7 @@ class ACIPerformanceMonitor(Extension):
     
     async def execute(self, loop_data: LoopData = LoopData(), **kwargs: Any):
         # Only execute if ACI tools are enabled
-        if not self.agent.config.additional.get('aci_tools', False):
+        if not self.agent.config.additional.get('aci_tools_enabled', False):
             return
             
         # Check if performance monitoring is enabled

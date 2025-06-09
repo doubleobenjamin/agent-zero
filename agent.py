@@ -251,7 +251,7 @@ class AgentConfig:
         'enable_memory_sharing': True,
 
         # ACI Tools Integration
-        'aci_tools': True,
+        'aci_tools_enabled': True,
         'aci_api_key': '',
         'aci_project_id': '',
         'aci_base_url': 'https://api.aci.dev',
@@ -338,6 +338,23 @@ class Agent:
         self.last_user_message: history.Message | None = None
         self.intervention: UserMessage | None = None
         self.data = {}  # free data object all the tools can use
+
+        # Initialize orchestration components (graceful degradation if not available)
+        self.agno_orchestrator = None
+        self.task_analyzer = None
+        self.agent_registry = None
+        self.team_coordinator = None
+
+        try:
+            from python.helpers.agno_orchestrator import AgnoOrchestrator
+            self.agno_orchestrator = AgnoOrchestrator(self)
+        except ImportError:
+            # Graceful degradation - orchestration features disabled
+            pass
+        except Exception as e:
+            PrintStyle(font_color="yellow", padding=True).print(
+                f"Warning: Failed to initialize orchestration system: {e}"
+            )
 
     async def monologue(self):
         while True:
@@ -827,6 +844,31 @@ class Agent:
         from python.tools.unknown import Unknown
         from python.helpers.tool import Tool
 
+        # Check ACI tools first
+        try:
+            from python.helpers.aci_interface import ACIInterface
+            from python.tools.aci_unified_tool import ACIUnifiedTool
+
+            aci_interface = ACIInterface()
+            if aci_interface.is_enabled() and aci_interface.initialize():
+                # Check if this is an ACI function name (format: APP_NAME__FUNCTION_NAME)
+                if "__" in name or name.startswith("aci_"):
+                    return ACIUnifiedTool(
+                        agent=self,
+                        name=name,
+                        method=method,
+                        args=args,
+                        message=message,
+                        **kwargs
+                    )
+        except ImportError:
+            # ACI not available, continue to legacy tools
+            pass
+        except Exception:
+            # ACI initialization failed, continue to legacy tools
+            pass
+
+        # Fall back to legacy tools
         classes = extract_tools.load_classes_from_folder(
             "python/tools", name + ".py", Tool
         )

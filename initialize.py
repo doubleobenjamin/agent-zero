@@ -1,3 +1,4 @@
+import os
 import models
 from agent import AgentConfig, ModelConfig
 from python.helpers import runtime, settings, defer
@@ -61,7 +62,7 @@ def initialize_agent():
         'enable_memory_sharing': True,
 
         # ACI Tools Integration
-        'aci_tools': current_settings.get("aci_tools", True),
+        'aci_tools_enabled': os.getenv("ACI_TOOLS_ENABLED", "true").lower() == "true",
         'aci_api_key': current_settings.get("aci_api_key", ""),
         'aci_project_id': current_settings.get("aci_project_id", ""),
         'aci_base_url': current_settings.get("aci_base_url", "https://api.aci.dev"),
@@ -198,13 +199,13 @@ def _initialize_enhanced_systems(config: AgentConfig):
                 raise
 
     # Initialize ACI tools
-    if config.additional.get('aci_tools', True):
+    if config.additional.get('aci_tools_enabled', True):
         try:
             _check_aci_configuration(config)
             PrintStyle(font_color="green", padding=True).print("✓ ACI tools integration initialized")
         except Exception as e:
             if config.additional.get('graceful_degradation', True):
-                config.additional['aci_tools'] = False
+                config.additional['aci_tools_enabled'] = False
                 PrintStyle(font_color="yellow", padding=True).print(f"⚠ ACI tools disabled: {e}")
             else:
                 raise

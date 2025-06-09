@@ -45,18 +45,63 @@ class PromptEnhancer:
     
     def _get_orchestration_variables(self) -> Dict[str, Any]:
         """Get orchestration-related template variables."""
-        # TODO: This will be populated when orchestration system is implemented
-        # For now, return placeholder structure
-        return {
-            "orchestration_status": {
-                "mode": "standalone",
-                "team_size": 1,
-                "stage": "ready"
-            },
-            "available_agents": [],
-            "team_status": [],
-            "agent_performance": []
-        }
+        variables = {}
+
+        try:
+            if hasattr(self.agent, 'agno_orchestrator') and self.agent.agno_orchestrator:
+                if self.agent.agno_orchestrator.is_available():
+                    orchestration_status = self.agent.agno_orchestrator.get_orchestration_status()
+                    available_agents = self.agent.agno_orchestrator.get_available_agents_summary()
+
+                    variables = {
+                        "orchestration_status": {
+                            "mode": "intelligent_delegation",
+                            "team_size": orchestration_status.get('agents', {}).get('available_agents', 1),
+                            "stage": "coordination" if orchestration_status.get('active_teams', 0) > 0 else "ready"
+                        },
+                        "available_agents": available_agents,
+                        "team_status": [f"Active teams: {orchestration_status.get('active_teams', 0)}"],
+                        "agent_performance": [
+                            f"Total agents: {orchestration_status.get('agents', {}).get('total_agents', 0)}",
+                            f"Available: {orchestration_status.get('agents', {}).get('available_agents', 0)}"
+                        ]
+                    }
+                else:
+                    variables = {
+                        "orchestration_status": {
+                            "mode": "initializing",
+                            "team_size": 1,
+                            "stage": "startup"
+                        },
+                        "available_agents": [],
+                        "team_status": ["Orchestration system starting up"],
+                        "agent_performance": []
+                    }
+            else:
+                variables = {
+                    "orchestration_status": {
+                        "mode": "standalone",
+                        "team_size": 1,
+                        "stage": "ready"
+                    },
+                    "available_agents": [],
+                    "team_status": ["Simple delegation mode"],
+                    "agent_performance": []
+                }
+        except Exception as e:
+            # Graceful fallback
+            variables = {
+                "orchestration_status": {
+                    "mode": "fallback",
+                    "team_size": 1,
+                    "stage": "error"
+                },
+                "available_agents": [],
+                "team_status": [f"Error: {str(e)}"],
+                "agent_performance": []
+            }
+
+        return variables
     
     def _get_memory_variables(self) -> Dict[str, Any]:
         """Get memory-related template variables."""
@@ -104,10 +149,26 @@ class PromptEnhancer:
     
     def _get_system_capabilities(self) -> Dict[str, Any]:
         """Get current system capabilities and feature status."""
-        return {
+
+        # Check if enhanced memory is available
+        enhanced_memory_available = False
+        try:
+            from python.helpers.enhanced_memory import EnhancedMemory
+            enhanced_memory_available = True
+        except ImportError:
+            pass
+
+        # Check if orchestration is available
+        orchestration_available = (
+            hasattr(self.agent, 'agno_orchestrator') and
+            self.agent.agno_orchestrator and
+            self.agent.agno_orchestrator.is_available()
+        )
+
+        capabilities = {
             "system_capabilities": {
-                "hybrid_memory": False,  # Will be True when implemented
-                "orchestration": False,  # Will be True when implemented
+                "hybrid_memory": enhanced_memory_available,
+                "orchestration": orchestration_available,
                 "aci_tools": False,      # Will be True when implemented
                 "multimodal": True       # Basic multimodal support exists
             },
@@ -115,6 +176,13 @@ class PromptEnhancer:
             "optimization_suggestions": "",
             "collaboration_context": ""
         }
+
+        # Add orchestration-specific insights
+        if orchestration_available:
+            capabilities["collaboration_context"] = "Multi-agent orchestration active with intelligent task delegation"
+            capabilities["optimization_suggestions"] = "Use delegate_task for complex tasks requiring specialist expertise"
+
+        return capabilities
     
     def _analyze_attachment_types(self, attachments: List[str]) -> List[str]:
         """Analyze attachment types for multi-modal context."""

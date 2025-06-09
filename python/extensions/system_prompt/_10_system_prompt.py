@@ -28,6 +28,24 @@ def get_tools_prompt(agent: Agent):
     prompt = agent.read_prompt("agent.system.tools.md")
     if agent.config.chat_model.vision:
         prompt += '\n' + agent.read_prompt("agent.system.tools_vision.md")
+
+    # Add ACI tools information if available
+    try:
+        from python.helpers.aci_tool_interface import ACIToolInterface
+        aci_interface = ACIToolInterface()
+        if aci_interface.enabled:
+            aci_prompt = agent.read_prompt("agent.system.tool.aci_tools.md")
+            if aci_prompt:
+                prompt += '\n\n' + aci_prompt
+
+            # Add dynamic ACI tools information
+            aci_tools_info = aci_interface.get_aci_tools_prompt()
+            if aci_tools_info:
+                prompt += '\n\n' + aci_tools_info
+    except Exception as e:
+        # Silently continue if ACI is not available
+        pass
+
     return prompt
 
 
