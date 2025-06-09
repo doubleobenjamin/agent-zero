@@ -2,7 +2,9 @@
 
 {{ include './agent.system.tool.response.md' }}
 
-{{ include './agent.system.tool.call_sub.md' }}
+{{ include './agent.system.tool.delegate_task.md' }}
+
+{{ include './agent.system.tool.hybrid_memory.md' }}
 
 {{ include './agent.system.tool.behaviour.md' }}
 
@@ -17,3 +19,5 @@
 {{ include './agent.system.tool.browser.md' }}
 
 {{ include './agent.system.tool.scheduler.md' }}
+
+{{ include './agent.system.tool.call_sub.md' }}
