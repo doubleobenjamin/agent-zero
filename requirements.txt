@@ -45,3 +45,6 @@ neo4j>=5.0.0
 
 # ACI Unified Tool Interface Dependencies
 aci-sdk>=0.1.0
+
+# Crawl4AI for documentation crawling and updates
+crawl4ai>=0.3.0
