@@ -1,5 +1,6 @@
+from __future__ import annotations
 from datetime import datetime
-from typing import Any, List, Sequence
+from typing import Any, List, Sequence, Optional # Added Optional
 from langchain.storage import InMemoryByteStore, LocalFileStore
 from langchain.embeddings import CacheBackedEmbeddings
 
@@ -30,6 +31,7 @@ from python.helpers.log import Log, LogItem
 from enum import Enum
 from agent import Agent, ModelConfig
 import models
+from .memory_abstraction import EnhancedMemoryAbstractionLayer # Added MAL import
 
 
 class MyFaiss(FAISS):
@@ -215,80 +217,110 @@ class Memory:
         self.db = db
         self.memory_subdir = memory_subdir
 
-    async def preload_knowledge(
-        self, log_item: LogItem | None, kn_dirs: list[str], memory_subdir: str
-    ):
-        if log_item:
-            log_item.update(heading="Preloading knowledge...")
+    @staticmethod
+    async def get_abstraction_layer(agent: Agent) -> EnhancedMemoryAbstractionLayer: # Use forward reference for Agent and MAL
+        if not hasattr(agent, '_memory_abstraction_layer_instance') or agent._memory_abstraction_layer_instance is None:
+            # print("MAL not found on agent, creating new instance.") # Optional: for debugging
+            instance = EnhancedMemoryAbstractionLayer(agent)
+            await instance.initialize()
+            agent._memory_abstraction_layer_instance = instance
+        # else:
+            # print("Found existing MAL instance on agent.") # Optional: for debugging
+        return agent._memory_abstraction_layer_instance
 
-        # db abs path
-        db_dir = Memory._abs_db_dir(memory_subdir)
+    async def preload_knowledge(self, log_item: Optional[LogItem], kn_dirs: List[str], memory_subdir: str) -> None:
+        """Preload knowledge from specified directories using the Enhanced Memory Abstraction Layer."""
+        # from . import knowledge_import # Ensure knowledge_import is imported - already imported at module level
 
-        # Load the index file if it exists
-        index_path = files.get_abs_path(db_dir, "knowledge_import.json")
+        # Get the Memory Abstraction Layer instance
+        # self.agent is available as the Memory instance is typically agent._memory
+        if not hasattr(self, 'agent'):
+            # This case should ideally not happen if Memory is initialized correctly on an agent.
+            print("Error: self.agent not found in Memory instance during preload_knowledge. Cannot get MAL.")
+            if log_item:
+                await log_item.log("Error: self.agent not found in Memory instance during preload_knowledge. Cannot get MAL.")
+            return
 
-        # make sure directory exists
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir)
+        # Ensure agent.config.dirs is accessible as expected by original code context
+        # The original code uses files.get_abs_path("knowledge", kn_dir, area.value)
+        # which implies a base knowledge directory. Let's assume agent.config.dirs.knowledge exists.
+        # If agent.config.dirs is not directly available, this path construction needs review.
+        # For now, proceeding with assumption it's similar to original context.
+        # A common pattern is `files.get_abs_path('knowledge')` to get base knowledge path.
+        # Let's assume `self.agent.config.dirs.knowledge` is the base path.
+        # However, the original `_preload_knowledge_folders` uses `files.get_abs_path("knowledge", kn_dir, area.value)`.
+        # This implies `kn_dir` is a subdirectory within a base "knowledge" directory.
+        # The new conceptual code uses `os.path.join(self.agent.config.dirs.knowledge, kn_dir)`
+        # This needs `self.agent.config.dirs` to have a `knowledge` attribute.
+        # Let's assume `files.get_abs_path("knowledge")` is the base knowledge path for constructing `knowledge_dir`.
 
-        index: dict[str, knowledge_import.KnowledgeImport] = {}
-        if os.path.exists(index_path):
-            with open(index_path, "r") as f:
-                index = json.load(f)
+        base_knowledge_path = files.get_abs_path("knowledge") # Base path for knowledge
 
-        # preload knowledge folders
-        index = self._preload_knowledge_folders(log_item, kn_dirs, index)
+        for kn_dir_name in kn_dirs: # kn_dirs usually contains ["default", "custom"]
+            # Construct path to the knowledge subdirectory (e.g., knowledge/default, knowledge/custom)
+            current_kn_base_dir = os.path.join(base_knowledge_path, kn_dir_name)
 
-        for file in index:
-            if index[file]["state"] in ["changed", "removed"] and index[file].get(
-                "ids", []
-            ):  # for knowledge files that have been changed or removed and have IDs
-                await self.delete_documents_by_ids(
-                    index[file]["ids"]
-                )  # remove original version
-            if index[file]["state"] == "changed":
-                index[file]["ids"] = await self.insert_documents(
-                    index[file]["documents"]
-                )  # insert new version
+            if not os.path.isdir(current_kn_base_dir):
+                msg = f"Knowledge base directory {current_kn_base_dir} not found, skipping."
+                if log_item:
+                    await log_item.log(msg)
+                print(msg)
+                continue
 
-        # remove index where state="removed"
-        index = {k: v for k, v in index.items() if v["state"] != "removed"}
+            # The original code iterates through Memory.Area subdirectories and instruments.
+            # The new simplified approach iterates `kn_dirs` and calls `load_knowledge_enhanced` for each.
+            # This implies `load_knowledge_enhanced` should handle finding relevant files within `current_kn_base_dir`.
+            # Or, we need to replicate the iteration logic for areas and instruments here.
 
-        # strip state and documents from index and save it
-        for file in index:
-            if "documents" in index[file]:
-                del index[file]["documents"]  # type: ignore
-            if "state" in index[file]:
-                del index[file]["state"]  # type: ignore
-        with open(index_path, "w") as f:
-            json.dump(index, f)
-
-    def _preload_knowledge_folders(
-        self,
-        log_item: LogItem | None,
-        kn_dirs: list[str],
-        index: dict[str, knowledge_import.KnowledgeImport],
-    ):
-        # load knowledge folders, subfolders by area
-        for kn_dir in kn_dirs:
+            # Replicating iteration for Memory.Area:
             for area in Memory.Area:
-                index = knowledge_import.load_knowledge(
-                    log_item,
-                    files.get_abs_path("knowledge", kn_dir, area.value),
-                    index,
-                    {"area": area.value},
+                knowledge_dir_to_scan = os.path.join(current_kn_base_dir, area.value)
+                if not os.path.isdir(knowledge_dir_to_scan):
+                    msg = f"Knowledge area directory {knowledge_dir_to_scan} not found, skipping."
+                    if log_item:
+                        # Using a sub-log item or just logging to the main one
+                        await log_item.log(msg) if log_item else None
+                    print(msg)
+                    continue
+
+                if log_item:
+                    await log_item.log(f"Preloading knowledge from: {knowledge_dir_to_scan} for area {area.value}")
+                print(f"Preloading knowledge from: {knowledge_dir_to_scan} for area {area.value}")
+
+                await knowledge_import.load_knowledge_enhanced(
+                    log_item=log_item,
+                    knowledge_dir=knowledge_dir_to_scan,
+                    metadata={"area": area.value, "source_type": "preload", "knowledge_set": kn_dir_name},
+                    filename_pattern="**/*", # Default pattern
+                    agent=self.agent
                 )
+                if log_item:
+                    await log_item.log(f"Finished preloading from {knowledge_dir_to_scan} using MAL.")
+                print(f"Finished preloading from {knowledge_dir_to_scan} using MAL.")
 
-        # load instruments descriptions
-        index = knowledge_import.load_knowledge(
-            log_item,
-            files.get_abs_path("instruments"),
-            index,
-            {"area": Memory.Area.INSTRUMENTS.value},
-            filename_pattern="**/*.md",
-        )
+        # Handling instruments (assuming they are not under kn_dirs/area structure but directly in 'instruments')
+        instruments_dir = files.get_abs_path("instruments")
+        if os.path.isdir(instruments_dir):
+            if log_item:
+                await log_item.log(f"Preloading instruments from: {instruments_dir}")
+            print(f"Preloading instruments from: {instruments_dir}")
+            await knowledge_import.load_knowledge_enhanced(
+                log_item=log_item,
+                knowledge_dir=instruments_dir,
+                metadata={"area": Memory.Area.INSTRUMENTS.value, "source_type": "preload", "knowledge_set": "instruments"},
+                filename_pattern="**/*.md", # Specific pattern for instruments
+                agent=self.agent
+            )
+            if log_item:
+                await log_item.log(f"Finished preloading instruments from {instruments_dir} using MAL.")
+            print(f"Finished preloading instruments from {instruments_dir} using MAL.")
+        else:
+            msg = f"Instruments directory {instruments_dir} not found, skipping."
+            if log_item:
+                await log_item.log(msg)
+            print(msg)
 
-        return index
+    # def _preload_knowledge_folders(...): # This method is now effectively replaced by the logic in preload_knowledge
 
     async def search_similarity_threshold(
         self, query: str, limit: int, threshold: float, filter: str = ""

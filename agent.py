@@ -234,6 +234,10 @@ class AgentConfig:
     code_exec_ssh_port: int = 55022
     code_exec_ssh_user: str = "root"
     code_exec_ssh_pass: str = ""
+
+    # New field for memory backend selection
+    memory_backend: str = "faiss"
+
     additional: Dict[str, Any] = field(default_factory=dict)
 
 

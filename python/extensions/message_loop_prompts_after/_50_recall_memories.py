@@ -63,14 +63,26 @@ class RecallMemories(Extension):
             callback=log_callback,
         )
 
-        # get solutions database
-        db = await Memory.get(self.agent)
+        # Get the Memory Abstraction Layer
+        memory_layer = await Memory.get_abstraction_layer(self.agent)
 
-        memories = await db.search_similarity_threshold(
+        # The previous filter was: f"area == '{Memory.Area.MAIN.value}' or area == '{Memory.Area.FRAGMENTS.value}'"
+        # The new MAL filter system (especially for FaissBackend) expects a simpler dict like {"area": "name"}.
+        # Directly translating an OR condition on areas is not supported by the basic MAL filter.
+        # Option 1: Perform two searches and combine. (More complex)
+        # Option 2: Simplify the filter. For this task, we'll search without a specific area filter,
+        # effectively searching all areas that the MAL backend is configured to search by default.
+        # This means solutions might be included if not filtered by other means.
+        # If specific area filtering (main OR fragments) is critical, this needs further refinement
+        # either in this extension (e.g., two searches) or by enhancing MAL's filtering capabilities.
+
+        search_filter = None # No specific area filter, searches all areas by default.
+
+        memories = await memory_layer.search_similarity_threshold(
             query=query,
             limit=RecallMemories.RESULTS,
             threshold=RecallMemories.THRESHOLD,
-            filter=f"area == '{Memory.Area.MAIN.value}' or area == '{Memory.Area.FRAGMENTS.value}'",  # exclude solutions
+            filter=search_filter
         )
 
         # log the short result

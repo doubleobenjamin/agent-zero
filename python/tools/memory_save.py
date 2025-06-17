@@ -7,12 +7,15 @@ class MemorySave(Tool):
     async def execute(self, text="", area="", **kwargs):
 
         if not area:
-            area = Memory.Area.MAIN.value
+            area = Memory.Area.MAIN.value # Using enum value for consistency if MAL expects specific strings
 
         metadata = {"area": area, **kwargs}
+        # Consider adding timestamp if standard practice, e.g.:
+        # from datetime import datetime, timezone
+        # metadata["timestamp"] = datetime.now(timezone.utc).isoformat()
 
-        db = await Memory.get(self.agent)
-        id = await db.insert_text(text, metadata)
+        memory_layer = await Memory.get_abstraction_layer(self.agent)
+        doc_id = await memory_layer.insert_text(text, metadata)
 
-        result = self.agent.read_prompt("fw.memory_saved.md", memory_id=id)
+        result = self.agent.read_prompt("fw.memory_saved.md", memory_id=doc_id)
         return Response(message=result, break_loop=False)

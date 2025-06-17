@@ -83,11 +83,11 @@ class MemorizeSolutions(Extension):
                 heading=f"{len(solutions)} successful solutions to memorize."
             )
 
-        # save chat history
-        db = await Memory.get(self.agent)
+        # Get the Memory Abstraction Layer
+        memory_layer = await Memory.get_abstraction_layer(self.agent)
 
         solutions_txt = ""
-        rem = []
+        all_removed_docs = [] # To accumulate all docs removed across iterations
         for solution in solutions:
             # solution to plain text:
             if isinstance(solution, dict):
@@ -101,26 +101,35 @@ class MemorizeSolutions(Extension):
 
             # remove previous solutions too similiar to this one
             if self.REPLACE_THRESHOLD > 0:
-                rem += await db.delete_documents_by_query(
+                search_filter_solutions = {"area": Memory.Area.SOLUTIONS.value}
+                removed_docs_for_current_solution = await memory_layer.delete_documents_by_query(
                     query=txt,
                     threshold=self.REPLACE_THRESHOLD,
-                    filter=f"area=='{Memory.Area.SOLUTIONS.value}'",
+                    filter=search_filter_solutions,
                 )
-                if rem:
-                    rem_txt = "\n\n".join(Memory.format_docs_plain(rem))
-                    log_item.update(replaced=rem_txt)
+                if removed_docs_for_current_solution:
+                    all_removed_docs.extend(removed_docs_for_current_solution)
+                    # Log accumulated removed docs at the end
 
             # insert new solution
-            await db.insert_text(text=txt, metadata={"area": Memory.Area.SOLUTIONS.value})
+            metadata_dict = {"area": Memory.Area.SOLUTIONS.value}
+            # Add timestamp if standard, e.g.:
+            # from datetime import datetime, timezone
+            # metadata_dict["timestamp"] = datetime.now(timezone.utc).isoformat()
+            await memory_layer.insert_text(text=txt, metadata=metadata_dict)
 
         solutions_txt = solutions_txt.strip()
         log_item.update(solutions=solutions_txt)
+
+        if all_removed_docs:
+            rem_txt = "\n\n".join(Memory.format_docs_plain(all_removed_docs)) # type: ignore
+            log_item.update(replaced=rem_txt)
+            log_item.stream(result=f"\nReplaced {len(all_removed_docs)} previous solutions.")
+
         log_item.update(
             result=f"{len(solutions)} solutions memorized.",
             heading=f"{len(solutions)} solutions memorized.",
         )
-        if rem:
-            log_item.stream(result=f"\nReplaced {len(rem)} previous solutions.")
 
     # except Exception as e:
     #     err = errors.format_error(e)

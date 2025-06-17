@@ -63,20 +63,23 @@ class RecallSolutions(Extension):
             system=system, message=loop_data.user_message.output_text() if loop_data.user_message else "", callback=log_callback
         )
 
-        # get solutions database
-        db = await Memory.get(self.agent)
+        # Get the Memory Abstraction Layer
+        memory_layer = await Memory.get_abstraction_layer(self.agent)
 
-        solutions = await db.search_similarity_threshold(
+        search_filter_solutions = {"area": Memory.Area.SOLUTIONS.value}
+        solutions = await memory_layer.search_similarity_threshold(
             query=query,
             limit=RecallSolutions.SOLUTIONS_COUNT,
             threshold=RecallSolutions.THRESHOLD,
-            filter=f"area == '{Memory.Area.SOLUTIONS.value}'",
+            filter=search_filter_solutions,
         )
-        instruments = await db.search_similarity_threshold(
+
+        search_filter_instruments = {"area": Memory.Area.INSTRUMENTS.value}
+        instruments = await memory_layer.search_similarity_threshold(
             query=query,
             limit=RecallSolutions.INSTRUMENTS_COUNT,
             threshold=RecallSolutions.THRESHOLD,
-            filter=f"area == '{Memory.Area.INSTRUMENTS.value}'",
+            filter=search_filter_instruments,
         )
 
         log_item.update(

@@ -82,30 +82,41 @@ class MemorizeMemories(Extension):
         else:
             log_item.update(heading=f"{len(memories)} entries to memorize.")
 
-        # save chat history
-        db = await Memory.get(self.agent)
+        # Get the Memory Abstraction Layer
+        memory_layer = await Memory.get_abstraction_layer(self.agent)
 
         memories_txt = ""
-        rem = []
+        all_removed_docs = [] # To accumulate all docs removed across iterations
         for memory in memories:
             # solution to plain text:
-            txt = f"{memory}"
+            txt = f"{memory}" # Assuming memory is a string or dict that can be stringified
             memories_txt += "\n\n" + txt
             log_item.update(memories=memories_txt.strip())
 
             # remove previous fragments too similiar to this one
             if self.REPLACE_THRESHOLD > 0:
-                rem += await db.delete_documents_by_query(
+                search_filter_fragments = {"area": Memory.Area.FRAGMENTS.value}
+                removed_docs_for_current_fragment = await memory_layer.delete_documents_by_query(
                     query=txt,
                     threshold=self.REPLACE_THRESHOLD,
-                    filter=f"area=='{Memory.Area.FRAGMENTS.value}'",
+                    filter=search_filter_fragments,
                 )
-                if rem:
-                    rem_txt = "\n\n".join(Memory.format_docs_plain(rem))
-                    log_item.update(replaced=rem_txt)
+                if removed_docs_for_current_fragment:
+                    all_removed_docs.extend(removed_docs_for_current_fragment)
+                    # Update log immediately or accumulate and log once at the end
+                    # For now, let's log accumulated at the end for brevity inside loop.
 
-            # insert new solution
-            await db.insert_text(text=txt, metadata={"area": Memory.Area.FRAGMENTS.value})
+            # insert new solution (fragment)
+            metadata_dict = {"area": Memory.Area.FRAGMENTS.value}
+            # Add timestamp if standard, e.g.:
+            # from datetime import datetime, timezone
+            # metadata_dict["timestamp"] = datetime.now(timezone.utc).isoformat()
+            await memory_layer.insert_text(text=txt, metadata=metadata_dict)
+
+        if all_removed_docs:
+            rem_txt = "\n\n".join(Memory.format_docs_plain(all_removed_docs)) # type: ignore
+            log_item.update(replaced=rem_txt)
+            log_item.stream(result=f"\nReplaced {len(all_removed_docs)} previous memories.") # stream for immediate feedback
 
         log_item.update(
             result=f"{len(memories)} entries memorized.",
