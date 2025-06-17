@@ -11,7 +11,7 @@ docker/run/agent-zero/
 .cursor/
 
 # ignore test files in root dir
-/*.test.py
+#/*.test.py
 
 # Ignore git internal files (for bundler)
 .git/
@@ -24,14 +24,14 @@ bundle/*/
 !bundle/mac_pkg_scripts
 
 # Handle work_dir directory
-work_dir/*
+#work_dir/*
 
 # Handle specific docker directories
 docker/run/agent-zero/**
 
 # Handle memory directory
-memory/**
-!memory/**/
+#memory/**
+#!memory/**/
 
 # Handle logs directory
 logs/*
@@ -40,18 +40,18 @@ logs/*
 tmp/*
 
 # Handle knowledge directory
-knowledge/**
-!knowledge/**/
+#knowledge/**
+#!knowledge/**/
 # Explicitly allow the default folder in knowledge
-!knowledge/default/
-!knowledge/default/**
+#!knowledge/default/
+#!knowledge/default/**
 
 # Handle instruments directory
-instruments/**
-!instruments/**/
+#instruments/**
+#!instruments/**/
 # Explicitly allow the default folder in instruments
-!instruments/default/
-!instruments/default/**
+#!instruments/default/
+#!instruments/default/**
 
 # Global rule to include .gitkeep files anywhere
 !**/.gitkeep
