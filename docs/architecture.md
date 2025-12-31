@@ -315,6 +315,14 @@ Skills are automatically recalled from memory when relevant to a task. You can a
 - Load a specific skill by name
 - Read files from within a skill directory
 
+#### Migration Note: Instruments to Skills
+Previously, Agent Zero used a custom system called "Instruments" for this purpose. The framework has since migrated to the [Anthropic Agent Skills standard](https://github.com/anthropics/skills) (`SKILL.md`) to adopt a more open and interoperable approach.
+
+**Why the change?**
+- **Interoperability**: Skills created for Agent Zero now work with other tools like Claude Code, Cursor, and Goose, and vice-versa ("create once, use everywhere").
+- **Progressive Disclosure**: The standard provides a structured way to expose only the skill metadata (name/description) to the agent initially, loading the full instructions and scripts only when relevant. This significantly optimizes context window usage compared to legacy methods.
+- **Formalized Structure**: The YAML frontmatter and standardized markdown structure provide a consistent interface for defining capabilities, making it easier to share and maintain skills within the community.
+
 ### 7. Extensions
 Extensions are a powerful feature of Agent Zero, designed to keep the main codebase clean and organized while allowing for greater flexibility and modularity.
 
